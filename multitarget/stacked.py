@@ -9,6 +9,7 @@ from .select import SelectNAndKBest, feature_concat
 from . import ignore_warnings
 from sklearn.exceptions import DataConversionWarning
 from sklearn.model_selection import cross_val_score, cross_val_predict
+from .detrend import DetrendMixin
 
 class StackedSingleTargetRegression(
 		BaseEstimator,
@@ -99,3 +100,15 @@ class StackedSingleTargetRegression(
 		Yhat2 = self.step2.predict(feature_concat(X, Yhat1))
 		return Yhat2
 
+
+
+class DetrendedStackedSingleTargetRegression(
+	StackedSingleTargetRegression,
+	DetrendMixin
+):
+
+	def fit(self, X, Y):
+		return super().fit(X, self.detrend_fit(X,Y))
+
+	def predict(self, X, return_std=False, return_cov=False):
+		return self.detrend_predict(X) + super().predict(X)
