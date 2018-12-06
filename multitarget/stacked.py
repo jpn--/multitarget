@@ -9,6 +9,7 @@ from .select import SelectNAndKBest, feature_concat
 from . import ignore_warnings
 from sklearn.exceptions import DataConversionWarning
 from sklearn.model_selection import cross_val_score, cross_val_predict
+from sklearn.metrics import r2_score
 from .detrend import DetrendMixin
 
 class StackedSingleTargetRegression(
@@ -100,7 +101,45 @@ class StackedSingleTargetRegression(
 		Yhat2 = self.step2.predict(feature_concat(X, Yhat1))
 		return Yhat2
 
+	def scores(self, X, Y, sample_weight=None):
+		"""
+		Returns the coefficients of determination R^2 of the prediction.
 
+		The coefficient R^2 is defined as (1 - u/v), where u is the residual
+		sum of squares ((y_true - y_pred) ** 2).sum() and v is the total
+		sum of squares ((y_true - y_true.mean()) ** 2).sum().
+		The best possible score is 1.0 and it can be negative (because the
+		model can be arbitrarily worse). A constant model that always
+		predicts the expected value of y, disregarding the input features,
+		would get a R^2 score of 0.0.
+
+		Notes
+		-----
+		R^2 is calculated by weighting all the targets equally using
+		`multioutput='raw_values'`.  See documentation for
+		sklearn.metrics.r2_score for more information.
+
+		Parameters
+		----------
+		X : array-like, shape = (n_samples, n_features)
+			Test samples. For some estimators this may be a
+			precomputed kernel matrix instead, shape = (n_samples,
+			n_samples_fitted], where n_samples_fitted is the number of
+			samples used in the fitting for the estimator.
+
+		Y : array-like, shape = (n_samples, n_outputs)
+			True values for X.
+
+		sample_weight : array-like, shape = [n_samples], optional
+			Sample weights.
+
+		Returns
+		-------
+		score : ndarray
+			R^2 of self.predict(X) wrt. Y.
+		"""
+		return r2_score(Y, self.predict(X), sample_weight=sample_weight,
+						multioutput='raw_values')
 
 class DetrendedStackedSingleTargetRegression(
 	StackedSingleTargetRegression,
