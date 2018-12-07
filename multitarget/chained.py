@@ -4,14 +4,16 @@ import numpy
 from sklearn.base import RegressorMixin, BaseEstimator
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.pipeline import make_pipeline
-from .cross_val import CrossValMixin
-from .base import MultiOutputRegressor
-from .select import SelectNAndKBest, feature_concat
-from . import ignore_warnings
 from sklearn.exceptions import DataConversionWarning
 from sklearn.model_selection import cross_val_score, cross_val_predict
 from sklearn.metrics import r2_score
+from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C, RationalQuadratic as RQ
+
+from . import ignore_warnings
 from .detrend import DetrendMixin
+from .cross_val import CrossValMixin
+from .base import MultiOutputRegressor
+from .select import SelectNAndKBest, feature_concat
 
 class ChainedTargetRegression(
 		BaseEstimator,
@@ -33,6 +35,7 @@ class ChainedTargetRegression(
 		self.step1 = GaussianProcessRegressor()
 		self.step2_cv_folds = step2_cv_folds
 		self.randomize_chain = randomize_chain
+		self._kernel_generator = lambda dims: C() * RBF([1.0] * dims)
 
 	def fit(self, X, Y):
 		"""
@@ -80,11 +83,15 @@ class ChainedTargetRegression(
 
 				n = self._chain_order[meta_n]
 
+				step_dims = X.shape[1] + min(self.keep_other_features, meta_n)
+
 				self.steps.append(
 
 					make_pipeline(
 						SelectNAndKBest(n=X.shape[1], k=self.keep_other_features),
-						GaussianProcessRegressor(),
+						GaussianProcessRegressor(
+							kernel=self._kernel_generator(step_dims),
+						),
 					).fit(
 						feature_concat(X, Yhat.iloc[:,:meta_n]),
 						Y_[:,n]
