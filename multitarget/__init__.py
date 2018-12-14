@@ -1,4 +1,10 @@
 
+__version__ = "1.0.1"
+
+def require_version(required_version):
+	if required_version.split('.') > __version__.split('.'):
+		raise ValueError("this multitarget is version {}".format(__version__))
+
 import warnings, contextlib
 
 
@@ -10,3 +16,4 @@ def ignore_warnings(category=Warning):
 
 
 
+from .simple import MultipleTargetRegression, DetrendedMultipleTargetRegression
