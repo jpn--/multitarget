@@ -118,7 +118,7 @@ class MultipleTargetRegression(
 		Yhat1 = self.step1.predict(X)
 
 		if self.standardize_Y is not None:
-			Yhat1 *= self.standardize_Y
+			Yhat1 *= self.standardize_Y[None,:]
 
 		cols = None
 		if self.Y_columns is not None:
