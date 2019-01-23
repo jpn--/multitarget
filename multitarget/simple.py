@@ -46,9 +46,9 @@ class MultipleTargetRegression(
 
 		Parameters
 		----------
-		X : numpy array or sparse matrix of shape [n_samples, n_features]
+		X : array-like or sparse matrix of shape [n_samples, n_features]
 			Training data
-		T : numpy array of shape [n_samples, n_targets]
+		Y : array-like of shape [n_samples, n_targets]
 			Target values.
 
 		Returns
@@ -75,6 +75,12 @@ class MultipleTargetRegression(
 	def predict(self, X, return_std=False, return_cov=False):
 		"""Predict using the model
 
+		This function will return a pandas DataFrame instead of
+		a simple numpy array if there is information available
+		to populate the index (if the X argument to this function
+		is a DataFrame) or the columns (if the Y argument to `fit`
+		was a DataFrame).
+
 		Parameters
 		----------
 		X : {array-like, sparse matrix}, shape = (n_samples, n_features)
@@ -84,11 +90,29 @@ class MultipleTargetRegression(
 
 		Returns
 		-------
-		C : array, shape = (n_samples,)
-			Returns predicted values.
+		C : array-like, shape = (n_samples, n_targets)
+			Returns predicted values. The n_targets dimension is
+			determined in the `fit` merthod.
 		"""
 
+		if isinstance(X, pandas.DataFrame):
+			idx = X.index
+		else:
+			idx = None
+
 		Yhat1 = self.step1.predict(X)
+
+		cols = None
+		if self.Y_columns is not None:
+			if len(self.Y_columns) == Yhat1.shape[1]:
+				cols = self.Y_columns
+
+		if idx is not None or cols is not None:
+			return pandas.DataFrame(
+				Yhat1,
+				index=idx,
+				columns=cols,
+			)
 		return Yhat1
 
 	def scores(self, X, Y, sample_weight=None):
