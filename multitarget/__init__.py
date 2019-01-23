@@ -1,5 +1,5 @@
 
-__version__ = "1.0.2"
+__version__ = "1.0.3"
 
 def require_version(required_version):
 	if required_version.split('.') > __version__.split('.'):

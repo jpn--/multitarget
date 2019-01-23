@@ -37,8 +37,13 @@ class MultipleTargetRegression(
 
 	def __init__(
 			self,
+			standardize_before_fit=True,
 	):
-		self._kernel_generator = lambda dims: C() * RBF([1.0] * dims)
+		self.standardize_before_fit = standardize_before_fit
+		if standardize_before_fit:
+			self._kernel_generator = lambda dims: RBF([1.0] * dims)
+		else:
+			self._kernel_generator = lambda dims: C() * RBF([1.0] * dims)
 
 	def fit(self, X, Y):
 		"""
@@ -61,6 +66,13 @@ class MultipleTargetRegression(
 			self.step1 = MultiOutputRegressor(GaussianProcessRegressor(
 				kernel=self._kernel_generator(X.shape[1])
 			))
+
+			if self.standardize_before_fit:
+				self.standardize_Y = Y.std(axis=0, ddof=0)
+				Y = Y / self.standardize_Y
+			else:
+				self.standardize_Y = None
+
 			self.step1.fit(X, Y)
 
 			if isinstance(Y, pandas.DataFrame):
@@ -95,12 +107,18 @@ class MultipleTargetRegression(
 			determined in the `fit` merthod.
 		"""
 
+		if return_std or return_cov:
+			raise NotImplementedError('return_std' if return_std else 'return_cov')
+
 		if isinstance(X, pandas.DataFrame):
 			idx = X.index
 		else:
 			idx = None
 
 		Yhat1 = self.step1.predict(X)
+
+		if self.standardize_Y is not None:
+			Yhat1 *= self.standardize_Y
 
 		cols = None
 		if self.Y_columns is not None:
