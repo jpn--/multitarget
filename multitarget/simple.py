@@ -2,7 +2,6 @@
 
 import pandas
 import numpy
-import scipy.stats
 import warnings
 
 from sklearn.base import RegressorMixin, BaseEstimator

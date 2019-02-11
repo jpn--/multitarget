@@ -13,11 +13,13 @@ requirements:
     - numpy
     - pandas
     - scikit-learn
+    - scipy
   run:
     - python {{ python }}
     - numpy
     - pandas
     - scikit-learn
+    - scipy
 
 build:
   noarch: python
